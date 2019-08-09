@@ -1,7 +1,8 @@
 //servo driver config.
+//Servo motors can rotate from 0 to 180 degrees as like as sending PWM from 800 to 2200.
 const int servoRangeMin = 800,servoRangeMax = 2200;
-int row,column;
-byte servoChannels[6][3] = {        {0x00,0x01,0x02},
+int row,column;                                    //
+byte servoChannels[6][3] = {        {0x00,0x01,0x02}, //The channel numbers for all 18 motors, respectively.
                                     {0x03,0x04,0x05},
                                     {0x06,0x07,0x08},
                                     {0x09,0x0A,0x0B},
@@ -9,7 +10,7 @@ byte servoChannels[6][3] = {        {0x00,0x01,0x02},
                                     {0x0F,0x10,0x11},
                   };
 unsigned int a=1500,b=1100,c=800;
-unsigned int servoPW[6][3] = {        {a,b,c},  //servoPW fonksiyonunu çağırırken bunalar set edilip driver a yollanıyor.
+unsigned int servoPW[6][3] = {        {a,b,c},  //This array contains fixed values of motors.
                                       {a,b,c},
                                       {a,b,c},
                                       {a,b,c},
@@ -17,7 +18,7 @@ unsigned int servoPW[6][3] = {        {a,b,c},  //servoPW fonksiyonunu çağır�
                                       {a,b,c},
                   };
 byte formattedPW[36];
-byte CommandSetServoPW = 0x84; // command for setting pulse width for a servo
+byte CommandSetServoPW = 0x84; // special commande for setting pulse width for a servo
 byte CommandSetMultipleServoPW = 0x9F; // command for setting pulse width for multiple servos
 byte CommandSetServoSpeed = 0x87; // command for setting speed for a servo
 const int SIZE=3;
@@ -40,14 +41,19 @@ void setup() {
 }
 
 void loop() {
-  if (Serial1.available() > 0) {
+  
+  //Saving and filtering data that coming from the game pad by transmitter & recevier
+  if (Serial1.available() > 0) {  
     data = Serial1.read();
-    //'s'
-    if(data == 115) {
+    
+    //only if the data starting with 's' continue. ('s'=115)
+    if(data == 115) {  
       dataErrorFlage = 0;
       index = 0;
       //index < 19
-      while(data != '\n') {
+      
+      //Saving data until character '\n'
+      while(data != '\n') { 
         if (Serial1.available() > 0) {
           data = Serial1.read(); 
 
@@ -56,7 +62,8 @@ void loop() {
           
           //Serial.print(c); 
           //Serial.print(' '); 
-                     
+          
+          //           
           if(data == '\n') {
             Serial.print('b'); Serial.print('\n'); 
             if (index < 19) {
@@ -64,10 +71,12 @@ void loop() {
             }
             break; 
           }
+          //Filtering the data (48-57 ASCII code of number's)
           else if(dataErrorFlage == 0 && data >= 48 && data <= 57 ) { 
             if (index < 19) {
                 charData[index++] = data;  
-            } else {
+            } 
+            else {
                 dataErrorFlage = 1;
             }
             
@@ -96,18 +105,24 @@ void loop() {
     }
 
     if(dataReceiveComplete) { 
-     printCharData();
+     printCharData(); //Printing data to pc's screen
+      
       //charArrayToInt(joystick1X,charData,3,6); 
-      //joystick1X = map(joystick1X,0,1023,servoRangeMin,servoRangeMax);  
-      charArrayToInt(joystick1Y,charData,7,10); 
-      joystick1Y = map(joystick1Y,0,1023,servoRangeMin,servoRangeMax);
+      //joystick1X = map(joystick1X,0,1023,servoRangeMin,servoRangeMax); 
+      
+      
+      charArrayToInt(joystick1Y,charData,7,10); //Converting the char data that between 7 10, to integer 
+      
+      joystick1Y = map(joystick1Y,0,1023,servoRangeMin,servoRangeMax);//Mapping data to the mx min value of the motors
       //Serial.print(joystick1Y); Serial.print('\n');
-      analogButtons1 = charData[0]-'0';  // integerData += charData[i]-'0';
+      
+      //Converting the char data 0, to integer
+      analogButtons1 = charData[0]-'0';  // integerData += charData[i]-'0'; 
 
      //charArrayToInt(analogButtons1,charData,0,0);
       //Serial.print(analogButtons1); Serial.print('\n');
 
-    
+    //Controlling the robot with joystick
      if(joystick1Y<1200) {
         turnRight();
      }
@@ -116,10 +131,11 @@ void loop() {
       } 
 
       //delay(1000);
-
+      
+      //CONTROLLING THE ROBOT WITH BOTTONS
       if (analogButtons1 == 0) {
         Serial.print(analogButtons1); Serial.print('\n');
-    setAllServoSpeed(50);
+    setAllServoSpeed(50); //Setting the speed of motors
   //setAllServoPW
   servoPW[0][0]=1500; servoPW[0][1]=1100; servoPW[0][2]=800; //1. leg
   servoPW[1][0]=1500; servoPW[1][1]=1100; servoPW[1][2]=800; //2. leg
@@ -186,45 +202,46 @@ void loop() {
   }   
   
   }
- 
+
+//robot turning right
 void turnLeft() {
   setAllServoSpeed(50);
-  //yükselme bu 3 baçağı havaya kadır
+  //rising 3 legs
   servoPW[0][0]=1500; servoPW[0][1]=800; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1500; servoPW[2][1]=800; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1500; servoPW[4][1]=800; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
   
-   //Havadaki motorları hafif döndür
+   //Turning 3 legs
   servoPW[0][0]=1100; servoPW[0][1]=800; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1100; servoPW[2][1]=800; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1100; servoPW[4][1]=800; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
 
-  //Havadaki motorları indir
+  //descenting 3 legs
   servoPW[0][0]=1100; servoPW[0][1]=1100; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1100; servoPW[2][1]=1100; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1100; servoPW[4][1]=1100; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
 
-  //Diğer motorları kaldır
+  //Rising other 3 legs
   servoPW[1][0]=1500; servoPW[1][1]=800; servoPW[1][2]=800;
   servoPW[3][0]=1500; servoPW[3][1]=800; servoPW[3][2]=800;
   servoPW[5][0]=1500; servoPW[5][1]=800; servoPW[5][2]=800;
   setAllServoPW();
   delay(300);
 
-  //Eski motorları normala getir(robotun dönmesi)
+  //Returning 3 legs to their first position (Turning the robot)
   servoPW[0][0]=1500; servoPW[0][1]=1100; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1500; servoPW[2][1]=1100; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1500; servoPW[4][1]=1100; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
 
-  //Diğer motorları indir
+  //Descenting the other 3 legs(Turning is finished)
   servoPW[1][0]=1500; servoPW[1][1]=1100; servoPW[1][2]=800;
   servoPW[3][0]=1500; servoPW[3][1]=1100; servoPW[3][2]=800;
   servoPW[5][0]=1500; servoPW[5][1]=1100; servoPW[5][2]=800;
@@ -232,23 +249,24 @@ void turnLeft() {
   delay(300);
 }
 
+//robot turning right
 void turnRight() {
  setAllServoSpeed(50);
-  //yükselme bu 3 baçağı havaya kadır
+  //rising 3 legs
   servoPW[0][0]=1500; servoPW[0][1]=800; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1500; servoPW[2][1]=800; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1500; servoPW[4][1]=800; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
   
-   //Havadaki motorları hafif döndür
+   //Turning 3 legs
   servoPW[0][0]=1900; servoPW[0][1]=800; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1900; servoPW[2][1]=800; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1900; servoPW[4][1]=800; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
 
-  //Havadaki motorları indir
+  //descenting 3 legs
   servoPW[0][0]=1900; servoPW[0][1]=1100; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1900; servoPW[2][1]=1100; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1900; servoPW[4][1]=1100; servoPW[4][2]=800; //5. leg
@@ -256,7 +274,7 @@ void turnRight() {
   delay(300);
 
 
-  //Diğer motorları kaldır
+  //Rising other 3 legs
   servoPW[1][0]=1500; servoPW[1][1]=800; servoPW[1][2]=800;
   servoPW[3][0]=1500; servoPW[3][1]=800; servoPW[3][2]=800;
   servoPW[5][0]=1500; servoPW[5][1]=800; servoPW[5][2]=800;
@@ -264,14 +282,14 @@ void turnRight() {
   delay(300);
   
 
-  //Eski motorları normala getir(robotun dönmesi)
+  //Returning 3 legs to their first position (Turning the robot)
   servoPW[0][0]=1500; servoPW[0][1]=1100; servoPW[0][2]=800; //1. leg
   servoPW[2][0]=1500; servoPW[2][1]=1100; servoPW[2][2]=800; //3. leg
   servoPW[4][0]=1500; servoPW[4][1]=1100; servoPW[4][2]=800; //5. leg
   setAllServoPW();
   delay(300);
 
-  //Diğer motorları indir
+  //Descenting the other 3 legs(Turning is finished)
   servoPW[1][0]=1500; servoPW[1][1]=1100; servoPW[1][2]=800;
   servoPW[3][0]=1500; servoPW[3][1]=1100; servoPW[3][2]=800;
   servoPW[5][0]=1500; servoPW[5][1]=1100; servoPW[5][2]=800;
@@ -279,8 +297,9 @@ void turnRight() {
   delay(300);
 }
 
+//testing function for motors
 unsigned int pos;
-void sweep(){ //test function
+void sweep(){ 
   for(pos=1000;pos<2000;pos+=10) {
     for(row=0;row<6;++row) {
       for(column=0;column<3;++column) {
@@ -301,46 +320,54 @@ void sweep(){ //test function
   
 }
 
-void formatPW(unsigned int PW, byte &lowerBits,byte &higherBits) {
-  PW *= 4;  //microsec to quater-microsec
+//This function prepares data for sending to motor driver
+//These kind of codes are special for the driver.
+void formatPW(unsigned int PW, byte &lowerBits,byte &higherBits) { 
+  PW *= 4;  //microsec to quater-microsec                        
   lowerBits=higherBits=0x00; //clearing all bits;
   lowerBits = PW & 0x007F ; // masking lower 7 bits
   higherBits = (PW & 0x3F80) >> 7 ; // masking higher 7 bits shifting 8 bits to right
 }
 
-void setServoPW(byte &servoNr ,unsigned int PW) {
-  commandBytes[0] = servoNr;
+//This func, let us to control only one motor that we choose by indidating its no.
+void setServoPW(byte &servoNr ,unsigned int PW) { 
+  commandBytes[0] = servoNr;                      
   formatPW(PW,commandBytes[1],commandBytes[2]);
     
-  Serial2.write(CommandSetServoPW);
+  Serial2.write(CommandSetServoPW); //This is necessary for starting to send data to driver.
   Serial2.write(commandBytes[0]);
   Serial2.write(commandBytes[1]);
   Serial2.write(commandBytes[2]);
 }
 
-void setAllServoPW() { 
-  int i=-1;  
+//This function gives to the 18 servo motors a stable value for the robot be always up.
+//When the robot will do sth, at last we will let it to return this position.
+void setAllServoPW() {  
+  int i=-1;             
   for(row=0;row<6;++row) {
     for(column=0;column<3;++column) {
         formatPW(servoPW[row][column],formattedPW[++i],formattedPW[++i]);
       }
   }
-    
-  Serial2.write(CommandSetMultipleServoPW);
-  Serial2.write(0x12); // 18 nr. of targets
+  
+  //Sendind data for motors by serial comminication.  
+  Serial2.write(CommandSetMultipleServoPW); 
+  Serial2.write(0x12); // 18 nr. of motors
   Serial2.write(0x00); // first channel
   Serial2.write(formattedPW,36);
 }
 
-
-void formatSpeed(int Speed, byte &lowerBits,byte &higherBits) { //Speed = 1 = 3.5 μs/ms
-  //Speed *= 1;  //microsec to quater-microsec
+//Speed = 1 = 3.5 μs/ms //This function prepares data for sending to motor driver
+//Protocol: (0x87, channel number, speed low bits, speed high bits)
+void formatSpeed(int Speed, byte &lowerBits,byte &higherBits) {
+  //Speed *= 1;  //microsec to quater-microsec          
   lowerBits=higherBits=0x00; //clearing all bits;
   lowerBits = Speed & 0x007F ; // masking lower 7 bits
   higherBits = (Speed & 0x3F80) >> 7 ; // masking higher 7 bits shifting 8 bits to right
 }
 
-void setServoSpeed(byte &servoNr ,int &Speed) {
+// Setting only one motor's speed
+void setServoSpeed(byte &servoNr ,int &Speed) { 
   commandBytes[0] = servoNr;
   formatSpeed(Speed,commandBytes[1],commandBytes[2]);
 
@@ -350,7 +377,8 @@ void setServoSpeed(byte &servoNr ,int &Speed) {
   Serial2.write(commandBytes[2]);
 }
 
-void setAllServoSpeed(int Speed) {
+//Setting all motors' speed
+void setAllServoSpeed(int Speed) { 
   for(row=0;row<6;++row) {
     for(column=0;column<3;++column) {
         setServoSpeed(servoChannels[row][column],Speed);
@@ -358,15 +386,17 @@ void setAllServoSpeed(int Speed) {
   }
 }
 
-
+//Converting character that coming from recevier to integer
 void charArrayToInt(unsigned int &integerData, char charData[],int digitFirst,int digitLast) {
-    integerData=0;
+    integerData=0;                   
     for(int i=digitFirst;i<=digitLast;++i) {
       integerData += charData[i]-'0';
       integerData *= 10;
     } 
     integerData /= 10;
 }
+
+//Printing data to pc's screen
 void printCharData() {
   
   for(int i = 0; i < dataSIZE; i++) {
