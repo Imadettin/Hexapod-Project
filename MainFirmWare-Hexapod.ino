@@ -1,3 +1,10 @@
+//ROBOT'S FIRMWARE
+
+//Compenents:
+//Arduino Mega 2560 Microcontroller,
+//Receiver, servo motor driver, 18 servo motors,
+
+
 //servo driver config.
 //Servo motors can rotate from 0 to 180 degrees as like as sending PWM from 800 to 2200.
 const int servoRangeMin = 800,servoRangeMax = 2200;
