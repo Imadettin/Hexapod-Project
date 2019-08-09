@@ -1,3 +1,10 @@
+//GAME PAD FIRMWARE
+
+//Components:
+//Microcontroller Arduino Nano,
+//Transmitter, 2 joysticks, 2 analog buttons and 6 digital buttons.
+
+ 
 unsigned int joystick1X,joystick1Y,joystick2X,joystick2Y,analogButtons1,analogButtons2,digiButton1,digiButton2,digiButton3,digiButton4,digiButton5,digiButton6;
 const int dataSIZE=21;
 int delayTime=1030;
@@ -21,6 +28,7 @@ void loop() {
   pinMode(4,  INPUT_PULLUP);
   pinMode(5,  INPUT_PULLUP);
 
+  //The data of the joysticks and buttons will be saved between 2nd and 20th character; while the 's' and '\n' will help for filtering
   char charData[dataSIZE] = {'s','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','\n'};
   
   if(joystick1X>480 && joystick1X<530) joystick1X = 500 ; //neutral position
